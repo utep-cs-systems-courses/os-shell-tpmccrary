@@ -68,7 +68,7 @@ def forkProcess(inputCom, inputArgs):
             except FileNotFoundError:
                 pass
         # Finally, if we reach the end of the PATH and cannot find the command, tell the user, exit fork with error.
-        os.write(2, (inputCom + ": Command not found.\n").encode())
+        os.write(2, (inputCom + ": command not found\n").encode())
         sys.exit(1)  # terminate with error
     else: # parent
         # os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" % 
