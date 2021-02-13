@@ -15,8 +15,13 @@ def myGetChar():
 def myReadLine():
     global buff
 
+    # print(buff)
+
     # If buff is none, that means we havent read anything yet.
     if buff == None:
+        buff = myGetChar()
+    # Special case for shell input. If there is nothing, call read again.
+    if buff == b'':
         buff = myGetChar()
 
     # print("buff is: " + str(buff))
@@ -28,10 +33,11 @@ def myReadLine():
     while len(buff):
         # Fill a string with the characters.
         line += chr(buff[index])
-
+        
         # If we find a new line character, change the buffer to start from there and return the line.
         if buff[index] == 10:
             buff = buff[index + 1:len(buff)]
+            # line = line[:-2]
             return line
         
         index += 1
