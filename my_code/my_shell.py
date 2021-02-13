@@ -25,10 +25,12 @@ def main():
 
 # Returns the user commmand from input.
 def tokenizeCommand(input):
+    if input == "\n":
+        return "\n"
     # Splits the string at the dollar sign.
-    input = input.split("$")[0]
+    # input = input.split("$")[0]
     # Removes new line from string.
-    input = input[:-1]
+    # input = input[:-1]
     # Splits the string at every spaces and just keeps the command.
     input = input.split()[0]
     return input
@@ -37,12 +39,16 @@ def tokenizeCommand(input):
 def tokenizeArgs(input):
     input = input.split()
     input = input[1:]
+    # Check for no commands.
     if input == []:
         input = [' ']
     return input
 
 # Forks and attempts to run process given a command and arguments.
 def forkProcess(inputCom, inputArgs):
+    if inputCom == "\n":
+        return
+
     pid = os.getpid()
     rc = os.fork()
 
