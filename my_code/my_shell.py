@@ -15,9 +15,6 @@ def main():
         inputCom = tokenizeCommand(rawInput)
         inputArgs = tokenizeArgs(rawInput)
 
-        print(inputCom)
-        print(inputArgs)
-
         # Check if they want to exit.
         if inputCom == "exit":
             exit()
