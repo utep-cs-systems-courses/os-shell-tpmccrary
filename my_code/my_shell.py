@@ -37,8 +37,35 @@ def tokenizeCommand(input):
 
 # Returns the list of arguments from the input.
 def tokenizeArgs(input):
+    inputArgs = []
+    arg = ''
+    quoteFlag = False
+
+    i = 0
+    while(i < len(input)):
+        if input[i] == ' ' and quoteFlag == False:
+            inputArgs.append(arg)
+            arg = ''
+            i += 1
+        elif input[i] == '\n':
+            inputArgs.append(arg)
+            break
+
+        arg += input[i]
+
+        if input[i] == '"' and quoteFlag == False:
+            quoteFlag = True
+        elif input[i] == '"' and quoteFlag == True:
+            inputArgs.append(arg)
+            arg = ''
+            quoteFlag = False
+            i += 1
+        i += 1
+    return inputArgs
+
+    # OLD: Keeping for now.
     input = input.split()
-    input = input[1:]
+    input[0] = ' ' 
     # Check for no commands.
     if input == []:
         input = [' ']
@@ -46,7 +73,7 @@ def tokenizeArgs(input):
 
 # Forks and attempts to run process given a command and arguments.
 def forkProcess(inputCom, inputArgs):
-    if inputCom == "\n":
+    if inputArgs[0] == '':
         return
 
     pid = os.getpid()
@@ -60,7 +87,7 @@ def forkProcess(inputCom, inputArgs):
         # Go through every directory in the PATH and try to find command.
         for dir in re.split(":", os.environ['PATH']):
             # Concatinate string where the path and the command.
-            program = "%s/%s" % (dir, inputCom)
+            program = "%s/%s" % (dir, inputArgs[0])
             # os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
             try:
                  os.execve(program, inputArgs, os.environ)
@@ -68,7 +95,7 @@ def forkProcess(inputCom, inputArgs):
             except FileNotFoundError:
                 pass
         # Finally, if we reach the end of the PATH and cannot find the command, tell the user, exit fork with error.
-        os.write(2, (inputCom + ": command not found\n").encode())
+        os.write(2, (inputArgs[0] + ": command not found\n").encode())
         sys.exit(1)  # terminate with error
     else: # parent
         # os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" % 
