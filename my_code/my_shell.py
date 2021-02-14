@@ -10,7 +10,7 @@ def main():
         # Prints a prompt.
         os.write(1, ("tpmccrary-shell@os-shell:$ ").encode())
 
-        # Wait for user to input here.
+        # Wait for user to input, and then tockenize that input.
         rawInput = myReadLine()
         inputArgs = tokenizeArgs(rawInput)
 
@@ -18,7 +18,7 @@ def main():
         if inputArgs[0] == "exit":
             exit()
 
-        # Fork process and attempt to run commmand.
+        # Fork process and attempt to run commmand using the user input arguments.
         forkProcess(inputArgs)
 
 # Returns the list of arguments from the user input.
@@ -33,6 +33,8 @@ def tokenizeArgs(input):
 
     i = 0
     while(i < len(input)):
+        # Here we go through every character in the user input to make up an argument.
+        # A space is what decides the speration of arguments, however, if we are in a quote, spaces are part of the argument.
 
         # If we find our first quote, flag that we are in a quote, and move on to the next character.
         if input[i] == '"' and inQuote == False:
@@ -67,6 +69,7 @@ def tokenizeArgs(input):
 
 # Forks and attempts to run process given a command and arguments.
 def forkProcess(inputArgs):
+    # If there is no argument, no need to try and execute anything.
     if inputArgs[0] == '':
         return
 
@@ -80,7 +83,7 @@ def forkProcess(inputArgs):
     elif rc == 0: #child
         # Go through every directory in the PATH and try to find command.
         for dir in re.split(":", os.environ['PATH']):
-            # Concatinate string where the path and the command.
+            # Concatinate string with the path and the command.
             program = "%s/%s" % (dir, inputArgs[0])
             # os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
             try:
