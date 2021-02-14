@@ -15,6 +15,8 @@ def main():
         inputCom = tokenizeCommand(rawInput)
         inputArgs = tokenizeArgs(rawInput)
 
+        print(inputArgs)
+
         # Check if they want to exit.
         if inputCom == "exit":
             exit()
@@ -39,28 +41,32 @@ def tokenizeCommand(input):
 def tokenizeArgs(input):
     inputArgs = []
     arg = ''
-    quoteFlag = False
+    inQuote = False
 
     i = 0
     while(i < len(input)):
-        if input[i] == ' ' and quoteFlag == False:
+
+        # If we find our first quote, flag that we are in a quote, and move on to the next character.
+        if input[i] == '"' and inQuote == False:
+            inQuote = True
+            i += 1
+        # If we reach a second quote, flag that we are out of the quote, and move on to the next character.
+        elif input[i] == '"' and inQuote == True:
+            inQuote = False
+            i += 1
+
+        # If the character is not a space, or if we are in a 
+        # quote (therefore we do not care about spaces), add the character to the argument.
+        if (input[i] != ' ' and input[i] != '\n') or inQuote == True:
+            arg += input[i]
+        # If the character is a space, we are not in a quote, and the argument is not empty, 
+        # add the argument to the list of arguments.
+        elif (input[i] == ' ' or input[i] == '\n') and inQuote == False and arg != '':
             inputArgs.append(arg)
             arg = ''
-            i += 1
-        elif input[i] == '\n':
-            inputArgs.append(arg)
-            break
 
-        arg += input[i]
-
-        if input[i] == '"' and quoteFlag == False:
-            quoteFlag = True
-        elif input[i] == '"' and quoteFlag == True:
-            inputArgs.append(arg)
-            arg = ''
-            quoteFlag = False
-            i += 1
         i += 1
+
     return inputArgs
 
     # OLD: Keeping for now.
