@@ -12,33 +12,21 @@ def main():
 
         # Wait for user to input here.
         rawInput = myReadLine()
-        inputCom = tokenizeCommand(rawInput)
         inputArgs = tokenizeArgs(rawInput)
 
-        print(inputArgs)
-
         # Check if they want to exit.
-        if inputCom == "exit":
+        if inputArgs[0] == "exit":
             exit()
 
         # Fork process and attempt to run commmand.
-        forkProcess(inputCom, inputArgs)
+        forkProcess(inputArgs)
 
-
-# Returns the user commmand from input.
-def tokenizeCommand(input):
-    if input == "\n":
-        return "\n"
-    # Splits the string at the dollar sign.
-    # input = input.split("$")[0]
-    # Removes new line from string.
-    # input = input[:-1]
-    # Splits the string at every spaces and just keeps the command.
-    input = input.split()[0]
-    return input
-
-# Returns the list of arguments from the input.
+# Returns the list of arguments from the user input.
 def tokenizeArgs(input):
+    # If user inputs nothing, return empty arguments.
+    if input == '\n' or input == '':
+        return ['']
+    
     inputArgs = []
     arg = ''
     inQuote = False
@@ -78,7 +66,7 @@ def tokenizeArgs(input):
     return input
 
 # Forks and attempts to run process given a command and arguments.
-def forkProcess(inputCom, inputArgs):
+def forkProcess(inputArgs):
     if inputArgs[0] == '':
         return
 
