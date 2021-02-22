@@ -1,5 +1,6 @@
 import os, sys, re
 from my_read import myReadLine
+from my_shell_commands import changeDirectory
 
 #  fd #0 is "standard input" (by default, attached to kbd)
 #  fd #1 is "standard ouput" (by default, attached to display)
@@ -8,18 +9,34 @@ from my_read import myReadLine
 def main():
     while True:
         # Prints a prompt.
-        os.write(1, ("tpmccrary-shell@os-shell:$ ").encode())
+        os.write(1, ("tpmccrary-shell@os-shell:" + str(os.getcwd()) +"$ ").encode())
 
         # Wait for user to input, and then tockenize that input.
         rawInput = myReadLine()
         inputArgs = tokenizeArgs(rawInput)
 
         # Check if they want to exit.
-        if inputArgs[0] == "exit":
-            exit()
+        # if inputArgs[0] == "exit":
+        #     exit()
+        # Check for shell command. Return false if it was not a shell command.
+        usedShellCom = checkForShellCommand(inputArgs)
 
-        # Fork process and attempt to run commmand using the user input arguments.
-        forkProcess(inputArgs)
+        if (usedShellCom == False):
+            # Fork process and attempt to run commmand using the user input arguments.
+            forkProcess(inputArgs)
+        
+
+# Given the user input, checks to see if it is a shell command.
+def checkForShellCommand(inputArgs):
+
+    if (inputArgs[0] == "exit"):
+        exit()
+    elif (inputArgs[0] == "cd"):
+        changeDirectory(inputArgs)
+        return True
+
+    return False
+
 
 # Returns the list of arguments from the user input.
 def tokenizeArgs(input):
