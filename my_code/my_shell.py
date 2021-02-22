@@ -102,6 +102,7 @@ def forkProcess(inputArgs):
         sys.exit(1)
     elif rc == 0: #child
 
+        # Check for piping. If we do a pipe, split up the arguments between the pipes.
         if ('|' in inputArgs):
             tempArgs = inputArgs
             inputArgs = []
@@ -165,12 +166,14 @@ def forkProcess(inputArgs):
         #          (pid, rc)).encode())
         childPidCode = os.wait()
 
-
+# Recursive function that pipes given commands.
 def pipeProcess(inputArgs, index):
 
-    pid = os.getpid()               # get and remember pid
+    pid = os.getpid()  # get and remember pid
 
-    pr,pw = os.pipe()
+    # Start pipe, get read and write.
+    pr,pw = os.pipe() 
+
     for f in (pr, pw):
         os.set_inheritable(f, True)
     # print("pipe fds: pr=%d, pw=%d" % (pr, pw))
@@ -228,20 +231,21 @@ def pipeProcess(inputArgs, index):
                 for arg in tokenInput:
                     inputArgs[index].append(arg)
 
-        os.close(1)                 # redirect child's stdout
-        os.dup(pw)
+        os.close(1) # redirect child's stdout. Close it.
+        os.dup(pw) # redirect to pipe write.
         os.set_inheritable(1, True)
-        for fd in (pr, pw):
+        for fd in (pr, pw): #Close initial read and write
             os.close(fd)
         execCommand(inputArgs[index])
                 
-    else:                           # parent (forked ok)
+    else:  # parent (forked ok)
         # print("Parent: My pid==%d.  Child's pid=%d" % (os.getpid(), rc), file=sys.stderr)
-        os.close(0)
-        os.dup(pr)
+        os.close(0) # Close standard in.
+        os.dup(pr) # Redirect to pipe read.
         os.set_inheritable(0, True)
-        for fd in (pw, pr):
+        for fd in (pw, pr): #Close initial read and write.
             os.close(fd)
+        # Checks if we are at end of arguments. If we are not, call pipe recursively to do the next arguments.
         if (index + 1 != len(inputArgs)):
             pipeProcess(inputArgs, index + 1)
             execCommand(inputArgs[index + 1])
