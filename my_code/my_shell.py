@@ -7,13 +7,18 @@ from my_shell_commands import changeDirectory
 #  fd #2 is "standard error" (by default, attached to display for error output)
 
 def main():
-    while True:
+    # Check if PS1 exist, if it does, flag that is exists.
+    ps1Exist = False
+    if (os.environ.get("PS1") != None):
+        ps1Exist = True
 
-        PS1 = ""
-        if (os.environ.get("PS1") != None):
+    while True:
+        # If the PS1 exist in the environ, use it, else, set my own.
+        if (ps1Exist):
             PS1 = os.environ.get("PS1")
         else:
-            PS1 = os.environ.get("USER") + ":" + str(os.getcwd()) + "$ "
+            os.environ["PS1"] = str(os.environ.get("USER") + ":" + str(os.getcwd()) + "$ ")
+            PS1 = os.environ.get("PS1")
 
         # Prints a prompt.
         os.write(1, PS1.encode())
