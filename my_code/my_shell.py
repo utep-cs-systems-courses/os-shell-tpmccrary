@@ -8,8 +8,15 @@ from my_shell_commands import changeDirectory
 
 def main():
     while True:
+
+        PS1 = ""
+        if (os.environ.get("PS1") != None):
+            PS1 = os.environ.get("PS1")
+        else:
+            PS1 = os.environ.get("USER") + ":" + str(os.getcwd()) + "$ "
+
         # Prints a prompt.
-        os.write(1, ("tpmccrary-shell@os-shell:" + str(os.getcwd()) +"$ ").encode())
+        os.write(1, PS1.encode())
 
         # Wait for user to input, and then tockenize that input.
         rawInput = myReadLine()
@@ -278,3 +285,4 @@ def execCommand(inputArgs):
 
 if __name__ == '__main__':
     main()
+
