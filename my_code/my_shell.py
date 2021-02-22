@@ -92,12 +92,56 @@ def forkProcess(inputArgs):
 
     pid = os.getpid()
     rc = os.fork()
+    redirect = False
 
     # Fork failed.
     if rc < 0:
         os.write(2, ("Fork failed, returning %d\n" % rc).encode())
         sys.exit(1)
     elif rc == 0: #child
+
+        # Checks for guzinta (goes into).
+        # TODO: Put this in its own function.
+        if ('>' in inputArgs):
+            tempInputArgs = inputArgs
+            inputArgs = []
+            i = 0
+            while(i < len(tempInputArgs)):
+                if (tempInputArgs[i] == '>'):
+                    if (i + 1 < len(tempInputArgs)):
+                        fileName = tempInputArgs[i + 1]
+                        redirect = True
+                    break
+                inputArgs.append(tempInputArgs[i])
+                i += 1
+            if (redirect == True):
+                os.close(1)
+                os.open(fileName, os.O_CREAT | os.O_WRONLY)
+                os.set_inheritable(1, True)
+
+        # Checks for file input.
+        # TODO: Put his in its own function.
+        if ('<' in inputArgs):
+            tempInputArgs = inputArgs
+            inputArgs = []
+            i = 0
+            while(i < len(tempInputArgs)):
+                if (tempInputArgs[i] == '<'):
+                    if (i + 1 < len(tempInputArgs)):
+                        fileName = tempInputArgs[i + 1]
+                        redirect = True
+                    break
+                inputArgs.append(tempInputArgs[i])
+                i += 1
+            if (redirect == True):
+                os.close(0)
+                os.open(fileName, os.O_RDONLY)
+                os.set_inheritable(1, True)
+                rawInput = myReadLine()
+                tokenInput = tokenizeArgs(rawInput)
+                for arg in tokenInput:
+                    inputArgs.append(arg)
+
         # Go through every directory in the PATH and try to find command.
         for dir in re.split(":", os.environ['PATH']):
             # Concatinate string with the path and the command.
