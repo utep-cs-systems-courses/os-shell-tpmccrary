@@ -90,6 +90,8 @@ def forkProcess(inputArgs):
     if inputArgs[0] == '':
         return
 
+    
+
     pid = os.getpid()
     rc = os.fork()
     redirect = False
@@ -99,6 +101,20 @@ def forkProcess(inputArgs):
         os.write(2, ("Fork failed, returning %d\n" % rc).encode())
         sys.exit(1)
     elif rc == 0: #child
+
+        if ('|' in inputArgs):
+            tempArgs = inputArgs
+            inputArgs = []
+            splitArgs = []
+            for arg in tempArgs:
+                if (arg == '|'):
+                    inputArgs.append(splitArgs)
+                    splitArgs = []
+                    continue
+                splitArgs.append(arg)
+            if (splitArgs != []):
+                inputArgs.append(splitArgs)
+            pipeProcess(inputArgs, 0)
 
         # Checks for guzinta (goes into).
         # TODO: Put this in its own function.
@@ -142,23 +158,116 @@ def forkProcess(inputArgs):
                 for arg in tokenInput:
                     inputArgs.append(arg)
 
-        # Go through every directory in the PATH and try to find command.
-        for dir in re.split(":", os.environ['PATH']):
-            # Concatinate string with the path and the command.
-            program = "%s/%s" % (dir, inputArgs[0])
-            # os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
-            try:
-                 os.execve(program, inputArgs, os.environ)
-            # Expected as we are going through the whole PATH.
-            except FileNotFoundError:
-                pass
-        # Finally, if we reach the end of the PATH and cannot find the command, tell the user, exit fork with error.
-        os.write(2, (inputArgs[0] + ": command not found\n").encode())
-        sys.exit(1)  # terminate with error
+        # Execute command with arguments.
+        execCommand(inputArgs)  
     else: # parent
         # os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" % 
         #          (pid, rc)).encode())
         childPidCode = os.wait()
+
+
+def pipeProcess(inputArgs, index):
+
+    pid = os.getpid()               # get and remember pid
+
+    pr,pw = os.pipe()
+    for f in (pr, pw):
+        os.set_inheritable(f, True)
+    # print("pipe fds: pr=%d, pw=%d" % (pr, pw))
+
+    # print("About to fork (pid=%d)" % pid)
+
+    rc = os.fork()
+
+    if rc < 0:
+        print("fork failed, returning %d\n" % rc, file=sys.stderr)
+        sys.exit(1)
+
+    elif rc == 0:                   #  child - will write to pipe
+        # print("Child: My pid==%d.  Parent's pid=%d" % (os.getpid(), pid), file=sys.stderr)
+
+        # Checks for guzinta (goes into).
+        # TODO: Put this in its own function.
+        if ('>' in inputArgs[index]):
+            tempInputArgs = inputArgs[index]
+            inputArgs[index] = []
+            i = 0
+            while(i < len(tempInputArgs)):
+                if (tempInputArgs[i] == '>'):
+                    if (i + 1 < len(tempInputArgs)):
+                        fileName = tempInputArgs[i + 1]
+                        redirect = True
+                    break
+                inputArgs[index].append(tempInputArgs[i])
+                i += 1
+            if (redirect == True):
+                os.close(1)
+                os.open(fileName, os.O_CREAT | os.O_WRONLY)
+                os.set_inheritable(1, True)
+
+        # Checks for file input.
+        # TODO: Put his in its own function.
+        if ('<' in inputArgs[index]):
+            tempInputArgs = inputArgs[index]
+            inputArgs[index] = []
+            i = 0
+            while(i < len(tempInputArgs)):
+                if (tempInputArgs[i] == '<'):
+                    if (i + 1 < len(tempInputArgs)):
+                        fileName = tempInputArgs[i + 1]
+                        redirect = True
+                    break
+                inputArgs[index].append(tempInputArgs[i])
+                i += 1
+            if (redirect == True):
+                os.close(0)
+                os.open(fileName, os.O_RDONLY)
+                os.set_inheritable(1, True)
+                rawInput = myReadLine()
+                tokenInput = tokenizeArgs(rawInput)
+                for arg in tokenInput:
+                    inputArgs[index].append(arg)
+
+        os.close(1)                 # redirect child's stdout
+        os.dup(pw)
+        os.set_inheritable(1, True)
+        for fd in (pr, pw):
+            os.close(fd)
+        execCommand(inputArgs[index])
+                
+    else:                           # parent (forked ok)
+        # print("Parent: My pid==%d.  Child's pid=%d" % (os.getpid(), rc), file=sys.stderr)
+        os.close(0)
+        os.dup(pr)
+        os.set_inheritable(0, True)
+        for fd in (pw, pr):
+            os.close(fd)
+        if (index + 1 != len(inputArgs)):
+            pipeProcess(inputArgs, index + 1)
+            execCommand(inputArgs[index + 1])
+        return
+        
+            
+        
+            
+
+    
+
+# Given arguments, tries to execute command from the PATH.
+def execCommand(inputArgs):
+    # Go through every directory in the PATH and try to find command.
+    for dir in re.split(":", os.environ['PATH']):
+        # Concatinate string with the path and the command.
+        program = "%s/%s" % (dir, inputArgs[0])
+        # os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+        try:
+             os.execve(program, inputArgs, os.environ)
+        # Expected as we are going through the whole PATH.
+        except FileNotFoundError:
+            pass
+    # Finally, if we reach the end of the PATH and cannot find the command, tell the user, exit fork with error.
+    os.write(2, (inputArgs[0] + ": command not found\n").encode())
+    sys.exit(1)  # terminate with error
         # os.write(1, ("Parent: Child %d terminated with exit code %d\n" % 
         #          childPidCode).encode())
             
