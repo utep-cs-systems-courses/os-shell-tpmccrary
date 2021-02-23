@@ -89,21 +89,19 @@ def tokenizeArgs(input):
 
     return inputArgs
 
-    # OLD: Keeping for now.
-    input = input.split()
-    input[0] = ' ' 
-    # Check for no commands.
-    if input == []:
-        input = [' ']
-    return input
-
 # Forks and attempts to run process given a command and arguments.
 def forkProcess(inputArgs):
     # If there is no argument, no need to try and execute anything.
     if inputArgs[0] == '':
         return
 
-    
+    # Flag for running process in background.
+    runInBackground = False
+
+    # Checks if and symbol is the last arg. If it is, set the flag to run process in background.
+    if (inputArgs[-1] == '&'):
+        runInBackground = True
+        inputArgs = inputArgs[:-1]
 
     pid = os.getpid()
     rc = os.fork()
@@ -177,7 +175,8 @@ def forkProcess(inputArgs):
     else: # parent
         # os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" % 
         #          (pid, rc)).encode())
-        childPidCode = os.wait()
+        if (not runInBackground):
+            childPidCode = os.wait()
 
 # Recursive function that pipes given commands.
 def pipeProcess(inputArgs, index):
